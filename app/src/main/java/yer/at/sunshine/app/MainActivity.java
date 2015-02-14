@@ -1,5 +1,7 @@
 package yer.at.sunshine.app;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -11,6 +13,7 @@ import android.view.MenuItem;
 public class MainActivity extends ActionBarActivity {
 
     private final String LOG_TAG = MainActivity.class.getSimpleName();
+    public Context myContext ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,7 +27,7 @@ public class MainActivity extends ActionBarActivity {
                     .add(R.id.container, new ForecastFragment())
                     .commit();
         }
-
+        myContext = getApplicationContext();
         Log.d(LOG_TAG, "onCreate() finished " );
     }
 
@@ -41,10 +44,16 @@ public class MainActivity extends ActionBarActivity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
+        Log.d(LOG_TAG, "onOptionsItemSelected() " );
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_forecastsettings) {
+            Log.d(LOG_TAG, "onOptionsItemSelected() action_forecastsettings : " + id );
+
+            Intent settingsIntent = new Intent(MainActivity.this, SettingsActivity.class);
+            startActivity(settingsIntent);
             return true;
+
         }
 
         return super.onOptionsItemSelected(item);

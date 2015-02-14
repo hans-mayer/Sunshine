@@ -4,9 +4,13 @@ package yer.at.sunshine.app;
  * Created by mayer on 2/7/2015.
  */
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,6 +19,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -42,7 +47,30 @@ public class ForecastFragment extends Fragment {
     private final String LOG_TAG = ForecastFragment.class.getSimpleName();
     private ArrayAdapter<String> mForecastAdapter;
 
+    public Context myContext;
+
     public ForecastFragment() {
+    }
+
+    /**
+     * updates the weather list
+     */
+    private void updateWeather() {
+        Log.d(LOG_TAG, "updateWeather() ");
+        FetchWeatherTask weatherTask = new FetchWeatherTask();
+        //weatherTask.execute("1230,Austria");
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String myLocation = sharedPref.getString(getString(R.string.pref_location_key),
+                getString(R.string.pref_location_default));
+        Log.d(LOG_TAG, "onOptionsItemSelected() action_refresh myLocation: " + myLocation);
+        weatherTask.execute(myLocation);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        Log.d(LOG_TAG, "onStart() ");
+        updateWeather();
     }
 
     @Override
@@ -51,7 +79,7 @@ public class ForecastFragment extends Fragment {
         setHasOptionsMenu(true);
 
         Log.d(LOG_TAG, "onCreate() ");
-
+        myContext = getActivity().getApplicationContext();
     }
 
     @Override
@@ -72,13 +100,17 @@ public class ForecastFragment extends Fragment {
         Log.d(LOG_TAG, "onOptionsItemSelected() id: " + id);
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+/*
+        if (id == R.id.action_forecastsettings) {
+            Log.d(LOG_TAG, "onOptionsItemSelected() action_forecastsettings : " + id);
+            Intent settingsIntent = new Intent(getActivity(), SettingsActivity.class);
+            startActivity(settingsIntent);
             return true;
         }
+*/
         if (id == R.id.action_refresh) {
-            Log.d(LOG_TAG, "onOptionsItemSelected() refresh ");
-            FetchWeatherTask weatherTask = new FetchWeatherTask();
-            weatherTask.execute("1230,Austria");
+            Log.d(LOG_TAG, "onOptionsItemSelected() action_refresh ");
+            updateWeather();
             return true;
         }
 
@@ -116,7 +148,17 @@ public class ForecastFragment extends Fragment {
 
         ListView myListView = (ListView) rootView.findViewById(R.id.listview_forecast);
         myListView.setAdapter(mForecastAdapter);
-
+        myListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Log.d(LOG_TAG, "onCreateView() setOnItemClickListener ");
+                String forecast = mForecastAdapter.getItem(position);
+                // Toast.makeText(myContext, forecast, Toast.LENGTH_LONG).show();
+                Intent detailedIntent = new Intent(getActivity(), DetailActivity.class);
+                detailedIntent.putExtra("forecast", forecast);
+                startActivity(detailedIntent);
+            }
+        });
         return rootView;
     }
 
@@ -135,9 +177,14 @@ public class ForecastFragment extends Fragment {
         @Override
         protected void onPostExecute(String[] myResult) {
             super.onPostExecute(myResult);
-            mForecastAdapter.clear();
-            for (String dayForecastStr : myResult) {
-                mForecastAdapter.add(dayForecastStr);
+            Log.d(LOG_TAG, "onPostExecute() ");
+            if (myResult != null) {
+                mForecastAdapter.clear();
+                for (String dayForecastStr : myResult) {
+                    mForecastAdapter.add(dayForecastStr);
+                }
+            } else {
+                Log.d(LOG_TAG, "onPostExecute() no result ");
             }
         }
 
@@ -183,7 +230,6 @@ public class ForecastFragment extends Fragment {
                 }
 
                 URL url = new URL(builtUri.toString());
-
                 Log.v(LOG_TAG, "doInBackground() Built URI " + builtUri.toString());
 
                 // URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/daily?q=1230,Austria&count=7&mode=json&units=metric");
@@ -217,7 +263,7 @@ public class ForecastFragment extends Fragment {
                     return null;
                 }
                 forecastJsonStr = buffer.toString();
-                Log.v(LOG_TAG, "doInBackground() JSON " + forecastJsonStr);
+                // Log.v(LOG_TAG, "doInBackground() JSON " + forecastJsonStr);
 
                 try {
                     resultStrs = getWeatherDataFromJson(forecastJsonStr, numDays);
