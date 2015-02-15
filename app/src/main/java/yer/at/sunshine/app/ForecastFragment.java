@@ -37,7 +37,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -62,8 +61,10 @@ public class ForecastFragment extends Fragment {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String myLocation = sharedPref.getString(getString(R.string.pref_location_key),
                 getString(R.string.pref_location_default));
-        Log.d(LOG_TAG, "onOptionsItemSelected() action_refresh myLocation: " + myLocation);
-        weatherTask.execute(myLocation);
+        String myUnits = sharedPref.getString(getString(R.string.pref_tempertureunits_key),
+                getString(R.string.pref_tempertureunits_default));
+        Log.d(LOG_TAG, "updateWeather() loc: " + myLocation + " units: " + myUnits );
+        weatherTask.execute(myLocation, myUnits);
     }
 
     @Override
@@ -124,6 +125,7 @@ public class ForecastFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
+/*
         String[] forecastArray = {
                 "Heute - sonnig - 23",
                 "morgen - nebel - 18",
@@ -137,13 +139,15 @@ public class ForecastFragment extends Fragment {
         };
 
         List<String> weekForecast = new ArrayList<String>(Arrays.asList(forecastArray));
+*/
+
 
         mForecastAdapter =
                 new ArrayAdapter<String>(
-                        getActivity(),
-                        R.layout.list_item_forecast,
+                        getActivity(), // der aktuell context
+                        R.layout.list_item_forecast,  // layout ID
                         R.id.list_item_forecast_textview,
-                        weekForecast
+                        new ArrayList<String>()
                 );
 
         ListView myListView = (ListView) rootView.findViewById(R.id.listview_forecast);
@@ -368,7 +372,7 @@ public class ForecastFragment extends Fragment {
                 double low = temperatureObject.getDouble(OWM_MIN);
 
                 highAndLow = formatHighLows(high, low);
-                resultStrs[i] = day + " - " + description + " - " + highAndLow;
+                resultStrs[i] = day + " - " + description + " , " + highAndLow;
             }
 
             Log.v(LOG_TAG, "getWeatherDataFromJson() " + Arrays.toString(resultStrs));

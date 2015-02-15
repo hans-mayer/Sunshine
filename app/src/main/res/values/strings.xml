@@ -7,8 +7,20 @@
     <string name="action_refresh">Refresh</string>
     <string name="title_activity_detail">DetailActivity</string>
     <string name="title_activity_mysettings">Settings</string>
-    <string name="pref_location_label">location label</string>
-    <string name="pref_location_key">location key</string>
+
+    <string name="pref_location_label">location ( City,Country ) </string>
+    <string name="pref_location_key">location_key</string>
     <string name="pref_location_default">1230,Austria</string>
+    <string name="pref_tempertureunits_label">temperature units\n ( metric, imperial ) </string>
+    <string name="pref_tempertureunits_key">units_key</string>
+    <string name="pref_tempertureunits_default">1230,Austria</string>
+    <string-array name="pref_tempertureunits_list_titles">
+        <item>Celsius</item>
+        <item>Fahrenheit</item>
+    </string-array>
+    <string-array name="pref_tempertureunits_list_values">
+        <item>1</item>
+        <item>0</item>
+    </string-array>
 
 </resources>
