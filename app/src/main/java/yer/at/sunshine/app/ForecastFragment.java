@@ -2,6 +2,7 @@ package yer.at.sunshine.app;
 
 /**
  * Created by mayer on 2/7/2015.
+ * test kommentar von christian
  */
 
 import android.content.Context;
