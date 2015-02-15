@@ -23,6 +23,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -64,7 +65,7 @@ public class ForecastFragment extends Fragment {
                 getString(R.string.pref_location_default));
         String myUnits = sharedPref.getString(getString(R.string.pref_tempertureunits_key),
                 getString(R.string.pref_tempertureunits_default));
-        Log.d(LOG_TAG, "updateWeather() loc: " + myLocation + " units: " + myUnits );
+        Log.d(LOG_TAG, "updateWeather() loc: " + myLocation + " units: " + myUnits);
         weatherTask.execute(myLocation, myUnits);
     }
 
@@ -102,19 +103,27 @@ public class ForecastFragment extends Fragment {
         Log.d(LOG_TAG, "onOptionsItemSelected() id: " + id);
 
         //noinspection SimplifiableIfStatement
-/*
-        if (id == R.id.action_forecastsettings) {
-            Log.d(LOG_TAG, "onOptionsItemSelected() action_forecastsettings : " + id);
+
+        if (id == R.id.action_frag_settings) {
+            Log.d(LOG_TAG, "onOptionsItemSelected() action_frag_settings : " + id);
             Intent settingsIntent = new Intent(getActivity(), SettingsActivity.class);
             startActivity(settingsIntent);
             return true;
         }
-*/
-        if (id == R.id.action_refresh) {
-            Log.d(LOG_TAG, "onOptionsItemSelected() action_refresh ");
+
+        if (id == R.id.action_frag_refresh) {
+            Log.d(LOG_TAG, "onOptionsItemSelected() action_frag_refresh ");
             updateWeather();
             return true;
         }
+
+        if (id == R.id.action_frag_map) {
+            Log.d(LOG_TAG, "onOptionsItemSelected() action_frag_map : " + id);
+            openPreferredLocationInMap();
+            return true;
+        }
+
+        Log.d(LOG_TAG, "onOptionsItemSelected() unknown id: " + id);
 
         return super.onOptionsItemSelected(item);
     }
@@ -190,6 +199,8 @@ public class ForecastFragment extends Fragment {
                 }
             } else {
                 Log.d(LOG_TAG, "onPostExecute() no result ");
+                Toast.makeText(myContext, getString(R.string.error_no_value),
+                        Toast.LENGTH_LONG).show();
             }
         }
 
@@ -203,9 +214,12 @@ public class ForecastFragment extends Fragment {
             }
 
             String format = "json";
-            String units = "metric";
+            // String units = "metric";
+            String queryParam = params[0]; // erster param location: 1230,Austria
+            String units = params[1];  // zweiter parameter ist metric oder imperial
             int numDays = 7;
             String[] resultStrs = null;
+            Log.d(LOG_TAG, "doInBackground() queryParam: " + queryParam + " units: " + units);
 
             try {
                 // Construct the URL for the OpenWeatherMap query
@@ -273,7 +287,11 @@ public class ForecastFragment extends Fragment {
                 try {
                     resultStrs = getWeatherDataFromJson(forecastJsonStr, numDays);
                 } catch (Exception ex3) {
-                    Log.e(LOG_TAG, ex3.toString());
+                    Log.e(LOG_TAG, "ex L279: " + ex3.toString());
+/*
+                    Toast.makeText(myContext, getString(R.string.error_no_value),
+                            Toast.LENGTH_LONG).show();
+*/
                 }
 
             } catch (Exception e) {
@@ -318,7 +336,23 @@ public class ForecastFragment extends Fragment {
             long roundedHigh = Math.round(high);
             long roundedLow = Math.round(low);
 
-            String highLowStr = roundedHigh + "/" + roundedLow;
+            SharedPreferences myPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String unitType = myPrefs.getString(
+                    getString(R.string.pref_tempertureunits_key),
+                    getString(R.string.pref_tempertureunits_default));
+            String unitChar = "";
+            // TODO improve comparing the string
+            if (unitType.equals("metric")) {
+                unitChar = "C";
+            }
+            if (unitType.equals("imperial")) {
+                unitChar = "F";
+            }
+            if (unitType.equals("internal")) {
+                unitChar = "K";
+            }
+
+            String highLowStr = roundedHigh + "/" + roundedLow + " " + unitChar;
             return highLowStr;
         }
 
@@ -379,6 +413,26 @@ public class ForecastFragment extends Fragment {
             Log.v(LOG_TAG, "getWeatherDataFromJson() " + Arrays.toString(resultStrs));
             return resultStrs;
         }
+    }
+
+    private void openPreferredLocationInMap() {
+
+        Log.d(LOG_TAG, "openPreferredLocationInMap() ");
+
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(myContext);
+        String myLocation = sharedPref.getString(getString(R.string.pref_location_key),
+                getString(R.string.pref_location_default));
+        Uri geoLocation = Uri.parse("geo:0,0?").buildUpon()
+                .appendQueryParameter("q", myLocation).build();
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(geoLocation);
+        if (intent.resolveActivity(myContext.getPackageManager()) != null) {
+            startActivity(intent);
+        } else {
+            Log.d(LOG_TAG, "openPreferredLocationInMap() couldn't call map-app " + myLocation);
+        }
+
     }
 
 
