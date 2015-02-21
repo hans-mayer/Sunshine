@@ -104,22 +104,9 @@ public class ForecastFragment extends Fragment {
 
         //noinspection SimplifiableIfStatement
 
-        if (id == R.id.action_frag_settings) {
-            Log.d(LOG_TAG, "onOptionsItemSelected() action_frag_settings : " + id);
-            Intent settingsIntent = new Intent(getActivity(), SettingsActivity.class);
-            startActivity(settingsIntent);
-            return true;
-        }
-
         if (id == R.id.action_frag_refresh) {
-            Log.d(LOG_TAG, "onOptionsItemSelected() action_frag_refresh ");
+            Log.d(LOG_TAG, "onOptionsItemSelected() action_frag_refresh : " + id);
             updateWeather();
-            return true;
-        }
-
-        if (id == R.id.action_frag_map) {
-            Log.d(LOG_TAG, "onOptionsItemSelected() action_frag_map : " + id);
-            openPreferredLocationInMap();
             return true;
         }
 
@@ -170,6 +157,7 @@ public class ForecastFragment extends Fragment {
                 // Toast.makeText(myContext, forecast, Toast.LENGTH_LONG).show();
                 Intent detailedIntent = new Intent(getActivity(), DetailActivity.class);
                 detailedIntent.putExtra("forecast", forecast);
+                detailedIntent.putExtra(Intent.EXTRA_TEXT, forecast);
                 startActivity(detailedIntent);
             }
         });

@@ -26,6 +26,6 @@
     </string-array>
 
     <string name="error_no_value">no value from server\n check settings</string>
-    <string name="action_map">select your location</string>
+    <string name="action_map">show map</string>
     <string name="action_share">share</string>
 </resources>

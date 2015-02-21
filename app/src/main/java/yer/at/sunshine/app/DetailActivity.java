@@ -21,7 +21,7 @@ import android.widget.TextView;
 public class DetailActivity extends ActionBarActivity {
 
     private final String LOG_TAG = DetailActivity.class.getSimpleName();
-    public static String forecast ;
+    public static String forecast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,13 +34,18 @@ public class DetailActivity extends ActionBarActivity {
         }
         Log.d(LOG_TAG, "onCreate() ");
         Intent detailedIntent = getIntent();
-         forecast = detailedIntent.getStringExtra("forecast");
-        Log.d(LOG_TAG, "onCreate() forecast: " + forecast );
-
+        forecast = detailedIntent.getStringExtra("forecast");
+        Log.d(LOG_TAG, "onCreate() forecast: " + forecast);
 
 
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_detail, menu);
+        return true;
+    }
 
 
     @Override
@@ -48,12 +53,12 @@ public class DetailActivity extends ActionBarActivity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        Log.d(LOG_TAG, "onOptionsItemSelected()  "  );
+        Log.d(LOG_TAG, "onOptionsItemSelected()  ");
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_detailsettings) {
-            Log.d(LOG_TAG, "onOptionsItemSelected() action_settings : " + id );
+            Log.d(LOG_TAG, "onOptionsItemSelected() action_detailsettings : " + id);
             Intent settingsIntent = new Intent(DetailActivity.this, SettingsActivity.class);
             startActivity(settingsIntent);
             return true;
@@ -73,22 +78,37 @@ public class DetailActivity extends ActionBarActivity {
         private String mForecastStr;
 
         public DetailFragment() {
+            Log.d(LOG_TAG, "DetailFragment()   ");
             setHasOptionsMenu(true);
         }
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
+            Log.d(LOG_TAG, "onCreateView()   ");
+
             View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
-            // TextView detailedText = (TextView) rootView.findViewById(R.id.detailedText);
-            // detailedText.setText(forecast);
-
             Intent myIntent = getActivity().getIntent();
+            if (myIntent == null)
+                Log.d(LOG_TAG, "onCreateView() myIntent == null ");
+            else {
+                Log.d(LOG_TAG, "onCreateView() myIntent != null ");
+                if (myIntent.hasExtra(Intent.EXTRA_TEXT))
+                    Log.d(LOG_TAG, "onCreateView() myIntent.hasExtra() is true ");
+                else
+                    Log.d(LOG_TAG, "onCreateView() myIntent.hasExtra() not true ");
+            }
             if (myIntent != null && myIntent.hasExtra(Intent.EXTRA_TEXT)) {
+                Log.d(LOG_TAG, "onCreateView() data available ");
                 mForecastStr = myIntent.getStringExtra(Intent.EXTRA_TEXT);
                 ((TextView) rootView.findViewById(R.id.detailedText))
                         .setText(mForecastStr);
+            } else {
+                Log.d(LOG_TAG, "onCreateView() no data available ");
+                ((TextView) rootView.findViewById(R.id.detailedText))
+                        .setText(forecast);
+                mForecastStr = forecast;
             }
             return rootView;
         }
@@ -122,11 +142,9 @@ public class DetailActivity extends ActionBarActivity {
             if (mShareActionProvider != null) {
                 mShareActionProvider.setShareIntent(createShareForecastIntent());
             } else {
-                Log.d(LOG_TAG, "onCreateOptionsMenu() ");
+                Log.d(LOG_TAG, "onCreateOptionsMenu() mShareActionProvider != null ");
             }
-
-
-            return ;
+            return;
         }
 
     }

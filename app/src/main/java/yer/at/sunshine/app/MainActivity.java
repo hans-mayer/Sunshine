@@ -34,12 +34,17 @@ public class MainActivity extends ActionBarActivity {
         Log.d(LOG_TAG, "onCreate() finished ");
     }
 
-
-    public boolean onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        Log.d(LOG_TAG, "onCreateOptionsMenu()  ");
+    public boolean onCreateOptionsMenuDelegate(Menu menu, MenuInflater inflater) {
+        Log.d(LOG_TAG, "onCreateOptionsMenuDelegate()  ");
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
+        inflater.inflate(R.menu.main, menu);
         return true;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        Log.d(LOG_TAG, "onCreateOptionsMenu()  ");
+        return onCreateOptionsMenuDelegate(menu, getMenuInflater());
     }
 
     @Override
