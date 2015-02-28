@@ -64,6 +64,8 @@ public class DetailActivity extends ActionBarActivity {
             return true;
         }
 
+        //  ypo: In word 'detailsettin
+
         return super.onOptionsItemSelected(item);
     }
 
