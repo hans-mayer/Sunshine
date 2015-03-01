@@ -1,8 +1,12 @@
 package yer.at.sunshine.app;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager.LoaderCallbacks;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.ShareActionProvider;
@@ -15,13 +19,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import yer.at.sunshine.app.data.WeatherContract.WeatherEntry;
+
 ;
 
 
 public class DetailActivity extends ActionBarActivity {
-
-    private final String LOG_TAG = DetailActivity.class.getSimpleName();
-    public static String forecast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,12 +35,6 @@ public class DetailActivity extends ActionBarActivity {
                     .add(R.id.container, new DetailFragment())
                     .commit();
         }
-        Log.d(LOG_TAG, "onCreate() ");
-        Intent detailedIntent = getIntent();
-        forecast = detailedIntent.getStringExtra("forecast");
-        Log.d(LOG_TAG, "onCreate() forecast: " + forecast);
-
-
     }
 
     @Override
@@ -47,106 +44,143 @@ public class DetailActivity extends ActionBarActivity {
         return true;
     }
 
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        Log.d(LOG_TAG, "onOptionsItemSelected()  ");
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_detailsettings) {
-            Log.d(LOG_TAG, "onOptionsItemSelected() action_detailsettings : " + id);
-            Intent settingsIntent = new Intent(DetailActivity.this, SettingsActivity.class);
-            startActivity(settingsIntent);
+            startActivity(new Intent(this, SettingsActivity.class));
             return true;
         }
-
-        //  ypo: In word 'detailsettin
-
         return super.onOptionsItemSelected(item);
     }
 
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class DetailFragment extends Fragment {
+    public static class DetailFragment extends Fragment implements LoaderCallbacks<Cursor> {
 
-        private final String LOG_TAG = DetailFragment.class.getSimpleName();
+        private static final String LOG_TAG = DetailFragment.class.getSimpleName();
 
         private static final String FORECAST_SHARE_HASHTAG = " #SunshineApp";
-        private String mForecastStr;
+
+        private ShareActionProvider mShareActionProvider;
+        private String mForecast;
+
+        private static final int DETAIL_LOADER = 0;
+
+        private static final String[] FORECAST_COLUMNS = {
+                WeatherEntry.TABLE_NAME + "." + WeatherEntry._ID,
+                WeatherEntry.COLUMN_DATE,
+                WeatherEntry.COLUMN_SHORT_DESC,
+                WeatherEntry.COLUMN_MAX_TEMP,
+                WeatherEntry.COLUMN_MIN_TEMP,
+        };
+
+        // these constants correspond to the projection defined above, and must change if the
+        // projection changes
+        private static final int COL_WEATHER_ID = 0;
+        private static final int COL_WEATHER_DATE = 1;
+        private static final int COL_WEATHER_DESC = 2;
+        private static final int COL_WEATHER_MAX_TEMP = 3;
+        private static final int COL_WEATHER_MIN_TEMP = 4;
 
         public DetailFragment() {
-            Log.d(LOG_TAG, "DetailFragment()   ");
             setHasOptionsMenu(true);
         }
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            Log.d(LOG_TAG, "onCreateView()   ");
+            return inflater.inflate(R.layout.fragment_detail, container, false);
+        }
 
-            View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
+        @Override
+        public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+            // Inflate the menu; this adds items to the action bar if it is present.
+            inflater.inflate(R.menu.detailfragment, menu);
 
-            Intent myIntent = getActivity().getIntent();
-            if (myIntent == null)
-                Log.d(LOG_TAG, "onCreateView() myIntent == null ");
-            else {
-                Log.d(LOG_TAG, "onCreateView() myIntent != null ");
-                if (myIntent.hasExtra(Intent.EXTRA_TEXT))
-                    Log.d(LOG_TAG, "onCreateView() myIntent.hasExtra() is true ");
-                else
-                    Log.d(LOG_TAG, "onCreateView() myIntent.hasExtra() not true ");
+            // Retrieve the share menu item
+            MenuItem menuItem = menu.findItem(R.id.action_share);
+
+            // Get the provider and hold onto it to set/change the share intent.
+            mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
+
+            // If onLoadFinished happens before this, we can go ahead and set the share intent now.
+            if (mForecast != null) {
+                mShareActionProvider.setShareIntent(createShareForecastIntent());
             }
-            if (myIntent != null && myIntent.hasExtra(Intent.EXTRA_TEXT)) {
-                Log.d(LOG_TAG, "onCreateView() data available ");
-                mForecastStr = myIntent.getStringExtra(Intent.EXTRA_TEXT);
-                ((TextView) rootView.findViewById(R.id.detailedText))
-                        .setText(mForecastStr);
-            } else {
-                Log.d(LOG_TAG, "onCreateView() no data available ");
-                ((TextView) rootView.findViewById(R.id.detailedText))
-                        .setText(forecast);
-                mForecastStr = forecast;
-            }
-            return rootView;
         }
 
         private Intent createShareForecastIntent() {
             Intent shareIntent = new Intent(Intent.ACTION_SEND);
             shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
             shareIntent.setType("text/plain");
-            shareIntent.putExtra(Intent.EXTRA_TEXT,
-                    mForecastStr + FORECAST_SHARE_HASHTAG);
+            shareIntent.putExtra(Intent.EXTRA_TEXT, mForecast + FORECAST_SHARE_HASHTAG);
             return shareIntent;
         }
 
         @Override
-        public void onCreateOptionsMenu(Menu menu, MenuInflater myInflater) {
+        public void onActivityCreated(Bundle savedInstanceState) {
+            getLoaderManager().initLoader(DETAIL_LOADER, null, this);
+            super.onActivityCreated(savedInstanceState);
+        }
 
-            Log.d(LOG_TAG, "onCreateOptionsMenu() ");
+        @Override
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+            Log.v(LOG_TAG, "In onCreateLoader");
+            Intent intent = getActivity().getIntent();
+            if (intent == null) {
+                return null;
+            }
 
-            // Inflate the menu; this adds items to the action bar if it is present.
-            myInflater.inflate(R.menu.detailfragment, menu);
+            // Now create and return a CursorLoader that will take care of
+            // creating a Cursor for the data being displayed.
+            return new CursorLoader(
+                    getActivity(),
+                    intent.getData(),
+                    FORECAST_COLUMNS,
+                    null,
+                    null,
+                    null
+            );
+        }
 
-            // Find the MenuItem that we know has the ShareActionProvider
-            MenuItem myItem = menu.findItem(R.id.action_share);
+        @Override
+        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+            Log.v(LOG_TAG, "In onLoadFinished");
+            if (!data.moveToFirst()) { return; }
 
-            // Get its ShareActionProvider
-            ShareActionProvider mShareActionProvider;
-            mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(myItem);
+            String dateString = Utility.formatDate(
+                    data.getLong(COL_WEATHER_DATE));
 
+            String weatherDescription =
+                    data.getString(COL_WEATHER_DESC);
 
-            // Connect the dots: give the ShareActionProvider its Share Intent
+            boolean isMetric = Utility.isMetric(getActivity());
+
+            String high = Utility.formatTemperature(
+                    data.getDouble(COL_WEATHER_MAX_TEMP), isMetric);
+
+            String low = Utility.formatTemperature(
+                    data.getDouble(COL_WEATHER_MIN_TEMP), isMetric);
+
+            mForecast = String.format("%s - %s - %s/%s", dateString, weatherDescription, high, low);
+
+            TextView detailTextView = (TextView)getView().findViewById(R.id.detailedText);
+            detailTextView.setText(mForecast);
+
+            // If onCreateOptionsMenu has already happened, we need to update the share intent now.
             if (mShareActionProvider != null) {
                 mShareActionProvider.setShareIntent(createShareForecastIntent());
-            } else {
-                Log.d(LOG_TAG, "onCreateOptionsMenu() mShareActionProvider != null ");
             }
-            return;
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Cursor> cursorLoader) {
+            Log.d(LOG_TAG, "onLoaderReset()  ");
         }
 
     }
