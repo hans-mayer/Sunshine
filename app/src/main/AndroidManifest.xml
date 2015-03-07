@@ -39,14 +39,15 @@
             android:authorities="yer.at.sunshine.app"
             android:name=".data.WeatherProvider"
             android:enabled="true"
-            android:exported="true" >
+            android:exported="true"
+            android:readPermission="tv.mayer.LICENSE_TO_KILL">
         </provider>
 
     </application>
 
     <permission
         android:name="tv.mayer.LICENSE_TO_KILL"
-        android:protectionLevel="dangerous"
+        android:protectionLevel="normal"
         android:label="License to kill" >
     </permission>
 
