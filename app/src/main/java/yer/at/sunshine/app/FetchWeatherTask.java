@@ -109,10 +109,8 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
      * into an Object hierarchy for us.
      */
     private void getWeatherDataFromJson(String forecastJsonStr,
-                                        String locationSetting)
+                                            String locationSetting)
             throws JSONException {
-
-        Log.d(LOG_TAG, "getWeatherDataFromJson() " );
 
         // Now we have a String representing the complete forecast in JSON Format.
         // Fortunately parsing is easy:  constructor takes the JSON string and converts it
@@ -231,13 +229,6 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
                 weatherValues.put(WeatherEntry.COLUMN_WEATHER_ID, weatherId);
 
                 cVVector.add(weatherValues);
-
-                Log.d(LOG_TAG, "getWeatherDataFromJson() " + " locationId: " + locationId +
-                    " dateTime: " + dateTime + " humidity:" + humidity +
-                    " pressure: " + pressure + " windSpeed: " + windSpeed +
-                    " windDirection: " + windDirection + " high: " + high +
-                    " low: " + low + " description: " + description +
-                    " weatherId: " + weatherId );
             }
 
             int inserted = 0;
@@ -346,5 +337,4 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
         }
         return null;
     }
-
 }

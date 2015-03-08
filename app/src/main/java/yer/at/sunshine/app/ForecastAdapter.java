@@ -11,11 +11,9 @@ import android.widget.TextView;
 
 /**
  * {@link ForecastAdapter} exposes a list of weather forecasts
- * from a {@link android.database.Cursor} to a {@link android.widget.ListView}.
+ * from a {@link Cursor} to a {@link android.widget.ListView}.
  */
 public class ForecastAdapter extends CursorAdapter {
-
-    private final String LOG_TAG = ForecastAdapter.class.getSimpleName();
 
     private static final int VIEW_TYPE_COUNT = 2;
     private static final int VIEW_TYPE_TODAY = 0;
@@ -73,29 +71,42 @@ public class ForecastAdapter extends CursorAdapter {
 
         ViewHolder viewHolder = (ViewHolder) view.getTag();
 
-        // Use placeholder image for now
-        viewHolder.iconView.setImageResource(R.drawable.ic_launcher);
+        int viewType = getItemViewType(cursor.getPosition());
+        switch (viewType) {
+            case VIEW_TYPE_TODAY: {
+                // Get weather icon
+                viewHolder.iconView.setImageResource(yer.at.sunshine.app.Utility.getArtResourceForWeatherCondition(
+                        cursor.getInt(yer.at.sunshine.app.ForecastFragment.COL_WEATHER_CONDITION_ID)));
+                break;
+            }
+            case VIEW_TYPE_FUTURE_DAY: {
+                // Get weather icon
+                viewHolder.iconView.setImageResource(yer.at.sunshine.app.Utility.getIconResourceForWeatherCondition(
+                        cursor.getInt(yer.at.sunshine.app.ForecastFragment.COL_WEATHER_CONDITION_ID)));
+                break;
+            }
+        }
 
         // Read date from cursor
-        long dateInMillis = cursor.getLong(ForecastFragment.COL_WEATHER_DATE);
+        long dateInMillis = cursor.getLong(yer.at.sunshine.app.ForecastFragment.COL_WEATHER_DATE);
         // Find TextView and set formatted date on it
-        viewHolder.dateView.setText(Utility.getFriendlyDayString(context, dateInMillis));
+        viewHolder.dateView.setText(yer.at.sunshine.app.Utility.getFriendlyDayString(context, dateInMillis));
 
         // Read weather forecast from cursor
-        String description = cursor.getString(ForecastFragment.COL_WEATHER_DESC);
+        String description = cursor.getString(yer.at.sunshine.app.ForecastFragment.COL_WEATHER_DESC);
         // Find TextView and set weather forecast on it
         viewHolder.descriptionView.setText(description);
 
         // Read user preference for metric or imperial temperature units
-        boolean isMetric = Utility.isMetric(context);
+        boolean isMetric = yer.at.sunshine.app.Utility.isMetric(context);
 
         // Read high temperature from cursor
-        double high = cursor.getDouble(ForecastFragment.COL_WEATHER_MAX_TEMP);
-        viewHolder.highTempView.setText(Utility.formatTemperature(context, high, isMetric));
+        double high = cursor.getDouble(yer.at.sunshine.app.ForecastFragment.COL_WEATHER_MAX_TEMP);
+        viewHolder.highTempView.setText(yer.at.sunshine.app.Utility.formatTemperature(context, high, isMetric));
 
         // Read low temperature from cursor
-        double low = cursor.getDouble(ForecastFragment.COL_WEATHER_MIN_TEMP);
-        viewHolder.lowTempView.setText(Utility.formatTemperature(context, low, isMetric));
+        double low = cursor.getDouble(yer.at.sunshine.app.ForecastFragment.COL_WEATHER_MIN_TEMP);
+        viewHolder.lowTempView.setText(yer.at.sunshine.app.Utility.formatTemperature(context, low, isMetric));
     }
 
     @Override
@@ -107,5 +118,4 @@ public class ForecastAdapter extends CursorAdapter {
     public int getViewTypeCount() {
         return VIEW_TYPE_COUNT;
     }
-
 }

@@ -18,7 +18,6 @@ package yer.at.sunshine.app.data;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import yer.at.sunshine.app.data.WeatherContract.LocationEntry;
 import yer.at.sunshine.app.data.WeatherContract.WeatherEntry;
@@ -27,8 +26,6 @@ import yer.at.sunshine.app.data.WeatherContract.WeatherEntry;
  * Manages a local database for weather data.
  */
 public class WeatherDbHelper extends SQLiteOpenHelper {
-
-    private final String LOG_TAG = WeatherDbHelper.class.getSimpleName();
 
     // If you change the database schema, you must increment the database version.
     private static final int DATABASE_VERSION = 2;
@@ -41,9 +38,6 @@ public class WeatherDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-
-        Log.d(LOG_TAG, "onCreate() ");
-
         // Create a table to hold locations.  A location consists of the string supplied in the
         // location setting, the city name, and the latitude and longitude
         final String SQL_CREATE_LOCATION_TABLE = "CREATE TABLE " + LocationEntry.TABLE_NAME + " (" +
@@ -85,9 +79,6 @@ public class WeatherDbHelper extends SQLiteOpenHelper {
                 " UNIQUE (" + WeatherEntry.COLUMN_DATE + ", " +
                 WeatherEntry.COLUMN_LOC_KEY + ") ON CONFLICT REPLACE);";
 
-        Log.d(LOG_TAG, "onCreate() execSQL: " + SQL_CREATE_WEATHER_TABLE);
-        Log.d(LOG_TAG, "onCreate() execSQL: " + SQL_CREATE_LOCATION_TABLE);
-
         sqLiteDatabase.execSQL(SQL_CREATE_LOCATION_TABLE);
         sqLiteDatabase.execSQL(SQL_CREATE_WEATHER_TABLE);
     }
@@ -104,5 +95,4 @@ public class WeatherDbHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + WeatherEntry.TABLE_NAME);
         onCreate(sqLiteDatabase);
     }
-
 }

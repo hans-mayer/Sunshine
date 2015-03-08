@@ -1,52 +1,65 @@
+/*
+ * Copyright (C) 2014 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package yer.at.sunshine.app;
 
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 
-
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity implements ForecastFragment.Callback {
 
     private final String LOG_TAG = MainActivity.class.getSimpleName();
-    private final String FORECASTFRAGMENT_TAG = "FFTAG";
+    private static final String DETAILFRAGMENT_TAG = "DFTAG";
 
+    private boolean mTwoPane;
     private String mLocation;
-    public Context myContext;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        mLocation = Utility.getPreferredLocation(this);
         super.onCreate(savedInstanceState);
+        mLocation = yer.at.sunshine.app.Utility.getPreferredLocation(this);
+
         setContentView(R.layout.activity_main);
-
-        Log.d(LOG_TAG, "onCreate() ");
-
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new ForecastFragment(), FORECASTFRAGMENT_TAG)
-                    .commit();
+        if (findViewById(R.id.weather_detail_container) != null) {
+            // The detail container view will be present only in the large-screen layouts
+            // (res/layout-sw600dp). If this view is present, then the activity should be
+            // in two-pane mode.
+            mTwoPane = true;
+            // In two-pane mode, show the detail view in this activity by
+            // adding or replacing the detail fragment using a
+            // fragment transaction.
+            if (savedInstanceState == null) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.weather_detail_container, new DetailFragment(), DETAILFRAGMENT_TAG)
+                        .commit();
+            }
+        } else {
+            mTwoPane = false;
         }
-        myContext = getApplicationContext();
-        Log.d(LOG_TAG, "onCreate() finished ");
-    }
-
-    public boolean onCreateOptionsMenuDelegate(Menu menu, MenuInflater inflater) {
-        Log.d(LOG_TAG, "onCreateOptionsMenuDelegate()  ");
-        // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.main, menu);
-        return true;
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        Log.d(LOG_TAG, "onCreateOptionsMenu()  ");
-        return onCreateOptionsMenuDelegate(menu, getMenuInflater());
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
     }
 
     @Override
@@ -55,62 +68,77 @@ public class MainActivity extends ActionBarActivity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        Log.d(LOG_TAG, "onOptionsItemSelected() ");
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_main_settings) {
-            Log.d(LOG_TAG, "onOptionsItemSelected() action_main_settings : " + id);
-
-            Intent settingsIntent = new Intent(MainActivity.this,
-                    SettingsActivity.class);
-            startActivity(settingsIntent);
+        if (id == R.id.action_settings) {
+            startActivity(new Intent(this, yer.at.sunshine.app.SettingsActivity.class));
             return true;
         }
-        if (id == R.id.action_main_map) {
-            Log.d(LOG_TAG, "onOptionsItemSelected() action_main_map : " + id);
+
+        if (id == R.id.action_map) {
             openPreferredLocationInMap();
             return true;
         }
-
-        Log.d(LOG_TAG, "onOptionsItemSelected() id unknown: " + id);
-
         return super.onOptionsItemSelected(item);
     }
 
     private void openPreferredLocationInMap() {
+        String location = yer.at.sunshine.app.Utility.getPreferredLocation(this);
 
-        Log.d(LOG_TAG, "openPreferredLocationInMap() ");
-
-//        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-//        String myLocation = sharedPref.getString(getString(R.string.pref_location_key),
-//                getString(R.string.pref_location_default));
-        String myLocation = Utility.getPreferredLocation(this);
-
+        // Using the URI scheme for showing a location found on a map.  This super-handy
+        // intent can is detailed in the "Common Intents" page of Android's developer site:
+        // http://developer.android.com/guide/components/intents-common.html#Maps
         Uri geoLocation = Uri.parse("geo:0,0?").buildUpon()
-                .appendQueryParameter("q", myLocation).build();
+                .appendQueryParameter("q", location)
+                .build();
 
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setData(geoLocation);
+
         if (intent.resolveActivity(getPackageManager()) != null) {
             startActivity(intent);
         } else {
-            Log.d(LOG_TAG, "openPreferredLocationInMap() couldn't call map-app " + myLocation);
+            Log.d(LOG_TAG, "Couldn't call " + location + ", no receiving apps installed!");
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(LOG_TAG, "onResume() ");
-        String location = Utility.getPreferredLocation( this );
+        String location = yer.at.sunshine.app.Utility.getPreferredLocation(this);
         // update the location in our second pane using the fragment manager
-        if (location != null && !location.equals(mLocation)) {
-            ForecastFragment ff = (ForecastFragment)getSupportFragmentManager().findFragmentByTag(FORECASTFRAGMENT_TAG);
+            if (location != null && !location.equals(mLocation)) {
+            ForecastFragment ff = (ForecastFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_forecast);
             if ( null != ff ) {
                 ff.onLocationChanged();
+            }
+            DetailFragment df = (DetailFragment)getSupportFragmentManager().findFragmentByTag(DETAILFRAGMENT_TAG);
+            if ( null != df ) {
+                df.onLocationChanged(location);
             }
             mLocation = location;
         }
     }
 
+    @Override
+    public void onItemSelected(Uri contentUri) {
+        if (mTwoPane) {
+            // In two-pane mode, show the detail view in this activity by
+            // adding or replacing the detail fragment using a
+            // fragment transaction.
+            Bundle args = new Bundle();
+            args.putParcelable(DetailFragment.DETAIL_URI, contentUri);
+
+            DetailFragment fragment = new DetailFragment();
+            fragment.setArguments(args);
+
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.weather_detail_container, fragment, DETAILFRAGMENT_TAG)
+                    .commit();
+        } else {
+            Intent intent = new Intent(this, DetailActivity.class)
+                    .setData(contentUri);
+            startActivity(intent);
+        }
+    }
 }
