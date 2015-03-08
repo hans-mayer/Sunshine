@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Language-specific constants -->
+    <string name="today">Heute</string>
+
+    <!-- For labelling tomorrow's forecast [CHAR LIMIT=15] -->
+    <string name="tomorrow">Morgen</string>
+
+    <!-- Date format [CHAR LIMIT=NONE] -->
+
+</resources>
