@@ -19,6 +19,9 @@ public class ForecastAdapter extends CursorAdapter {
     private static final int VIEW_TYPE_TODAY = 0;
     private static final int VIEW_TYPE_FUTURE_DAY = 1;
 
+    // Flag to determine if we want to use a separate view for "today".
+    private boolean mUseTodayLayout = true;
+
     /**
      * Cache of the children views for a forecast list item.
      */
@@ -75,43 +78,47 @@ public class ForecastAdapter extends CursorAdapter {
         switch (viewType) {
             case VIEW_TYPE_TODAY: {
                 // Get weather icon
-                viewHolder.iconView.setImageResource(yer.at.sunshine.app.Utility.getArtResourceForWeatherCondition(
-                        cursor.getInt(yer.at.sunshine.app.ForecastFragment.COL_WEATHER_CONDITION_ID)));
+                viewHolder.iconView.setImageResource(Utility.getArtResourceForWeatherCondition(
+                        cursor.getInt(ForecastFragment.COL_WEATHER_CONDITION_ID)));
                 break;
             }
             case VIEW_TYPE_FUTURE_DAY: {
                 // Get weather icon
-                viewHolder.iconView.setImageResource(yer.at.sunshine.app.Utility.getIconResourceForWeatherCondition(
-                        cursor.getInt(yer.at.sunshine.app.ForecastFragment.COL_WEATHER_CONDITION_ID)));
+                viewHolder.iconView.setImageResource(Utility.getIconResourceForWeatherCondition(
+                        cursor.getInt(ForecastFragment.COL_WEATHER_CONDITION_ID)));
                 break;
             }
         }
 
         // Read date from cursor
-        long dateInMillis = cursor.getLong(yer.at.sunshine.app.ForecastFragment.COL_WEATHER_DATE);
+        long dateInMillis = cursor.getLong(ForecastFragment.COL_WEATHER_DATE);
         // Find TextView and set formatted date on it
-        viewHolder.dateView.setText(yer.at.sunshine.app.Utility.getFriendlyDayString(context, dateInMillis));
+        viewHolder.dateView.setText(Utility.getFriendlyDayString(context, dateInMillis));
 
         // Read weather forecast from cursor
-        String description = cursor.getString(yer.at.sunshine.app.ForecastFragment.COL_WEATHER_DESC);
+        String description = cursor.getString(ForecastFragment.COL_WEATHER_DESC);
         // Find TextView and set weather forecast on it
         viewHolder.descriptionView.setText(description);
 
         // Read user preference for metric or imperial temperature units
-        boolean isMetric = yer.at.sunshine.app.Utility.isMetric(context);
+        boolean isMetric = Utility.isMetric(context);
 
         // Read high temperature from cursor
-        double high = cursor.getDouble(yer.at.sunshine.app.ForecastFragment.COL_WEATHER_MAX_TEMP);
-        viewHolder.highTempView.setText(yer.at.sunshine.app.Utility.formatTemperature(context, high, isMetric));
+        double high = cursor.getDouble(ForecastFragment.COL_WEATHER_MAX_TEMP);
+        viewHolder.highTempView.setText(Utility.formatTemperature(context, high, isMetric));
 
         // Read low temperature from cursor
-        double low = cursor.getDouble(yer.at.sunshine.app.ForecastFragment.COL_WEATHER_MIN_TEMP);
-        viewHolder.lowTempView.setText(yer.at.sunshine.app.Utility.formatTemperature(context, low, isMetric));
+        double low = cursor.getDouble(ForecastFragment.COL_WEATHER_MIN_TEMP);
+        viewHolder.lowTempView.setText(Utility.formatTemperature(context, low, isMetric));
+    }
+
+    public void setUseTodayLayout(boolean useTodayLayout) {
+        mUseTodayLayout = useTodayLayout;
     }
 
     @Override
     public int getItemViewType(int position) {
-        return position == 0 ? VIEW_TYPE_TODAY : VIEW_TYPE_FUTURE_DAY;
+        return (position == 0 && mUseTodayLayout) ? VIEW_TYPE_TODAY : VIEW_TYPE_FUTURE_DAY;
     }
 
     @Override
